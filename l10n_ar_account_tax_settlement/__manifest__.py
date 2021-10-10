@@ -27,7 +27,7 @@
     ],
     'depends': [
         'account_tax_settlement',
-        'l10n_ar_account_reports',
+        # 'l10n_ar_account_reports',
         'l10n_ar_ux',
     ],
     'data': [
