@@ -23,7 +23,7 @@
         'views/account_journal_view.xml',
     ],
     'demo': [
-        'demo/res_partner_demo.xml',
+        # 'demo/res_partner_demo.xml',
     ],
     'installable': True,
     'auto_install': True,
