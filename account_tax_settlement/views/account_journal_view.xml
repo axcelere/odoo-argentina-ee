@@ -14,6 +14,21 @@
                 <field name="settlement_financial_report_id" attrs="{'invisible': [('tax_settlement', '=', False)]}"/>
                 <field name="settlement_account_tag_ids" attrs="{'invisible': [('tax_settlement', '=', False)]}" widget="many2many_tags"/>
             </field>
+            <page name="journal_entries" position="attributes">
+                <attribute name="attrs">{}</attribute>
+            </page>
+            <field name="payment_debit_account_id" position="attributes">
+                <attribute name="attrs">{'required': [('id', '!=', False), ('type', 'in', ('bank', 'cash'))]}</attribute>
+            </field>
+            <field name="inbound_payment_method_ids" position="attributes">
+                <attribute name="attrs">{}</attribute>
+            </field>
+            <field name="payment_credit_account_id" position="attributes">
+                <attribute name="attrs">{'required': [('id', '!=', False), ('type', 'in', ('bank', 'cash'))]}</attribute>
+            </field>
+            <field name="outbound_payment_method_ids" position="attributes">
+                <attribute name="attrs">{}</attribute>
+            </field>
 <!--            <field name="payment_debit_account_id" position="attributes">-->
 <!--                <attribute name="attrs">{'required': [('tax_settlement', '!=', False)]}</attribute>-->
 <!--            </field>-->
