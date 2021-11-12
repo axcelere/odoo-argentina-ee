@@ -76,6 +76,25 @@ class AccountJournal(models.Model):
         # help="Taxes with this tags are going to be settled by this journal"
     )
 
+    payment_debit_account_id = fields.Many2one(
+        comodel_name='account.account', check_company=True, copy=False, ondelete='restrict',
+        help="Incoming payments entries triggered by invoices/refunds will be posted on the Outstanding Receipts Account "
+             "and displayed as blue lines in the bank reconciliation widget. During the reconciliation process, concerned "
+             "transactions will be reconciled with entries on the Outstanding Receipts Account instead of the "
+             "receivable account.", string='Outstanding Receipts Account',
+        domain=lambda self: "[('deprecated', '=', False), ('company_id', '=', company_id), \
+                                 '|', ('user_type_id', '=', %s), ('id', '=', default_account_id)]" % self.env.ref(
+            'account.data_account_type_current_assets').id)
+    payment_credit_account_id = fields.Many2one(
+        comodel_name='account.account', check_company=True, copy=False, ondelete='restrict',
+        help="Outgoing payments entries triggered by bills/credit notes will be posted on the Outstanding Payments Account "
+             "and displayed as blue lines in the bank reconciliation widget. During the reconciliation process, concerned "
+             "transactions will be reconciled with entries on the Outstanding Payments Account instead of the "
+             "payable account.", string='Outstanding Payments Account',
+        domain=lambda self: "[('deprecated', '=', False), ('company_id', '=', company_id), \
+                                 '|', ('user_type_id', '=', %s), ('id', '=', default_account_id)]" % self.env.ref(
+            'account.data_account_type_current_assets').id)
+
     @api.constrains('tax_settlement', 'type')
     def check_tax_settlement(self):
         for rec in self:
