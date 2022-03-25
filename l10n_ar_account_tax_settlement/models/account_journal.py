@@ -1133,7 +1133,7 @@ class AccountJournal(models.Model):
                 content += '%016d' % int(re.sub('[^0-9]', '', move.l10n_latam_document_number))
                 #Importe del comprobante
                 codop = '1'
-                issue_date = payment.payment_date
+                issue_date = payment.date
                 amount_tot = abs(payment.payment_group_id.payments_amount)
                 base_amount = payment.withholdable_base_amount
 
