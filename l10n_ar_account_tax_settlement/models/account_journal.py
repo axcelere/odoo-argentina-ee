@@ -719,7 +719,10 @@ class AccountJournal(models.Model):
 
         for line in move_lines:
             # pay_group = payment.payment_group_id
-            move = line.move_id
+            if line.move_id.move_type in ['entry'] and len(line.payment_id.reconciled_bill_ids) == 1:
+                move = line.payment_id.reconciled_bill_ids[0]
+            else:
+                move = line.move_id
             payment = line.payment_id
             internal_type = line.l10n_latam_document_type_id.internal_type
             document_code = line.l10n_latam_document_type_id.code
