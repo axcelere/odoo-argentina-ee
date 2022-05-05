@@ -14,11 +14,7 @@
         'l10n_ar_reports',
     ],
     'data': [
-        # 'data/account_financial_report_data.xml',
-        # 'report/account_ar_vat_line_views.xml',
-        # 'views/res_config_settings_view.xml',
-        # 'security/ir.model.access.csv',
-        # 'security/security.xml',
+        'report/account_ar_vat_line_views.xml',
     ],
     'demo': [],
     'auto_install': True,
