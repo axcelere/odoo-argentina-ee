@@ -719,7 +719,7 @@ class AccountJournal(models.Model):
 
         for line in move_lines:
             # pay_group = payment.payment_group_id
-            if line.move_id.move_type in ['entry'] and len(line.payment_id.reconciled_bill_ids) == 1:
+            if line.move_id.move_type in ['entry'] and len(line.payment_id.reconciled_bill_ids):
                 move = line.payment_id.reconciled_bill_ids[0]
             else:
                 move = line.move_id
@@ -743,8 +743,14 @@ class AccountJournal(models.Model):
                     internal_type == 'credit_note' and 'C' or
                     internal_type == 'debit_note' and 'D' or 'R')
                 content += line.l10n_latam_document_type_id.l10n_ar_letter
+
+            if line.payment_id.payment_group_id:
+                _l10n_latam_document_number = line.payment_id.payment_group_id.display_name
+            else:
+                _l10n_latam_document_number = move.l10n_latam_document_number
+
             document_parts = move._l10n_ar_get_document_number_parts(
-                move.l10n_latam_document_number, move.l10n_latam_document_type_id.code)
+                _l10n_latam_document_number, move.l10n_latam_document_type_id.code)
             # si el punto de venta es de 5 digitos no encontramos doc
             # que diga como proceder, tomamos los ultimos 4 digitos
             pto_venta = "{:0>4d}".format(document_parts['point_of_sale'])[-4:]
