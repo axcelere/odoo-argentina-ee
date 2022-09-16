@@ -23,7 +23,7 @@ class ResPartner(models.Model):
         wiz = self.env['res.partner.update.from.padron.wizard'].with_context(
             active_ids=self.ids, active_model=self._name).create({})
         wiz.change_partner()
-        action = self.env.ref('l10n_ar_edi_ux.action_partner_update').read()[0]
+        action = self.env.ref('l10n_ar_edi_ux.action_partner_update').sudo().read()[0]
         action['res_id'] = wiz.id
         return action
 
@@ -87,7 +87,7 @@ class ResPartner(models.Model):
         if isinstance(data_mt_actividades, (dict,)):
             data_mt_actividades = [data_mt_actividades]
 
-        actividades = [act["idActividad"]
+        actividades = [str(act["idActividad"])
                        for act in data_rg.get("actividad", []) + data_mt_actividades]
         cat_mt = data_mt.get("categoriaMonotributo", {})
         monotributo = "S" if cat_mt else "N"
