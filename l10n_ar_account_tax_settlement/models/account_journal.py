@@ -751,6 +751,11 @@ class AccountJournal(models.Model):
             else:
                 _l10n_latam_document_number = move.l10n_latam_document_number
 
+            _l10n_latam_document_number_splitted = re.split("\W+", _l10n_latam_document_number)
+            if len(_l10n_latam_document_number_splitted) > 2:
+                _l10n_latam_document_number_splitted = _l10n_latam_document_number_splitted[-2:]
+                _l10n_latam_document_number = '%s-%s' % (_l10n_latam_document_number_splitted[0], _l10n_latam_document_number_splitted[1])
+
             document_parts = move._l10n_ar_get_document_number_parts(
                 _l10n_latam_document_number, move.l10n_latam_document_type_id.code)
             # si el punto de venta es de 5 digitos no encontramos doc
