@@ -76,17 +76,13 @@ class AccountJournal(models.Model):
             open_report = self._context.get('open_report', False)
             debt_balance = self._context.get('debt_balance', False)
             if tax_settlement:
-                action = self.env.ref(
-                    'account_tax_settlement.'
-                    'action_account_tax_move_line').read()[0]
+                action = self.env["ir.actions.actions"]._for_xml_id('account_tax_settlement.action_account_tax_move_line')
                 # action['domain'] = self._get_tax_settlement_lines_domain()
                 action['domain'] = (
                     self._get_tax_settlement_lines_domain_by_tags())
                 return action
             elif accounts_balance:
-                action = self.env.ref(
-                    'account_ux.'
-                    'action_move_line_analisis').read()[0]
+                action = self.env["ir.actions.actions"]._for_xml_id('account_ux.action_move_line_analisis')
                 # action['domain'] = self._get_tax_settlement_lines_domain()
                 action['domain'] = (
                     self._get_tax_settlement_lines_domain_by_tags_accounts())
@@ -97,7 +93,7 @@ class AccountJournal(models.Model):
                     ('name', '=',
                         self.settlement_financial_report_id.get_report_name()),
                     ('tag', '=', 'account_report')], limit=1)
-                return action.read()[0]
+                return action.sudo().read()[0]
             elif debt_balance and self.settlement_partner_id:
                 action = self.settlement_partner_id.open_partner_ledger()
                 ctx = self._context.copy()
