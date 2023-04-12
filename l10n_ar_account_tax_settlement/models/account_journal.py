@@ -1,5 +1,6 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
+from odoo.tools.float_utils import float_round
 # from odoo.tools.misc import formatLang
 # from odoo.tools import DEFAULT_SERVER_DATE_FORMAT
 import re
@@ -581,9 +582,9 @@ class AccountJournal(models.Model):
             if payment_group:
                 # solo en comprobantes A, M segun especificacion
                 vat_amount = 0.0
-                total_amount = payment_group.payments_amount
+                total_amount = float_round(payment_group.payments_amount, precision_digits=2)
                 # es lo mismo que payment_group.matched_amount_untaxed
-                taxable_amount = payment.withholdable_base_amount
+                taxable_amount = float_round(payment.withholdable_base_amount, precision_digits=2)
 
                 # lo sacamos por diferencia
                 other_taxes_amount = company_currency.round(
@@ -1157,7 +1158,8 @@ class AccountJournal(models.Model):
                 codop = '1'
                 issue_date = payment.date or payment.payment_group_id.payment_date
                 amount_tot = abs(payment.payment_group_id.payments_amount)
-                base_amount = payment.withholdable_base_amount
+                # withholdable_base_amount es para ret de gcias, withholding_base_amount es para ret de iva
+                base_amount = payment.withholdable_base_amount or payment.withholding_base_amount
 
             elif move.is_invoice():
                 # Codigo del Comprobante         [ 2]
