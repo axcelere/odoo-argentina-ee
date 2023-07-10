@@ -55,7 +55,7 @@
             <field name="account_id" position="after">
                 <field name="tax_line_id"/>
             </field>
-            <tree>
+            <tree position="inside">
                 <field name="tax_state"/>
                 <button name="button_create_tax_settlement_entry" icon="fa-arrow-right" help="Make a move to settle current tax line" attrs="{'invisible': [('tax_state', '!=', 'to_settle')]}" type="object" string="Settle" />
                 <button name="action_open_tax_settlement_entry" icon="fa-external-link" help="Open Settlement Entry" attrs="{'invisible': [('tax_state', 'not in', ['to_pay', 'paid'])]}" type="object" string="Open" />
