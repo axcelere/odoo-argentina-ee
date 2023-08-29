@@ -61,6 +61,7 @@ class AccountJournal(models.Model):
         ('iibb_aplicado_api', 'TXT Perc/Ret IIBB aplicadas API'),
         ('iibb_aplicado_sircar', 'TXT Perc/Ret IIBB aplicadas SIRCAR'),
         ('iibb_aplicado_dgr_mendoza', 'TXT  Perc/Ret IIBB aplicado DGR Mendonza'),
+        ('retenciones_iva', 'TXT Retenciones/Percepciones Sufridas IVA'),
         # ('other', 'Other')
     ])
 
@@ -1150,6 +1151,7 @@ class AccountJournal(models.Model):
             elif move.is_invoice():
                 # Codigo del Comprobante         [ 2]
                 tipodoc = int(move.l10n_latam_document_type_id.code)
+                es_nc = False
 
                 if tipodoc in [1, 6, 19, 51, 81, 82, 118, 201, 206]:
                     # Factura
@@ -1160,6 +1162,7 @@ class AccountJournal(models.Model):
                 elif tipodoc in [3, 8, 21, 53, 43, 44, 110, 112, 113, 114, 119, 203, 208]:
                     # Nota de Crédito
                     content += '03'
+                    es_nc = True
                 elif tipodoc in [2, 7, 20, 52, 45, 46, 115, 116, 120, 202, 207]:
                     # Nota de Débito
                     content += '04'
@@ -1175,7 +1178,10 @@ class AccountJournal(models.Model):
                 content += '%05d' % int(re.sub('[^0-9]', '', move.l10n_latam_document_number)[:5])
                 content += '%011d' % int(re.sub('[^0-9]', '', move.l10n_latam_document_number)[5:])
                 issue_date = move.invoice_date
-                base_amount = line.tax_base_amount
+                # si la percepción es sobre una nota de crédito informamos el importe de la percepción
+                # aclaración: no tenemos ningún respaldo documental respecto a esto, solo lo hicimos para
+                # solucionar la inconsistencia del ticket 61671
+                base_amount = line.tax_base_amount if es_nc==False else line.balance
                 codop = '2'
                 #Importe del comprobante
                 amount_tot = abs(move.amount_total_signed)
@@ -1268,7 +1274,7 @@ class AccountJournal(models.Model):
         }]
 
     def misiones_files_values(self, move_lines):
-        """ Implementado segun especificación indicada en ticket 51437. También se puede ver detalles en readme
+        """ Implementado segun especificación indicada en ticket 60295. También se puede ver detalles en readme
         """
         self.ensure_one()
         content = ''
@@ -1278,14 +1284,22 @@ class AccountJournal(models.Model):
                 # Fecha
                 content += fields.Date.from_string(payment.date).strftime('%d-%m-%Y') + ','
 
-                # Constancia
-                content += payment.withholding_number[-8:] + ','
+                # Tipo de comprobante
+                #    Aquí vemos si se está pagando al menos una nota de crédito
+                #    si es así interpretamos que es corresponde a un CAR
+                matched_move_code_prefix = payment.payment_group_id.matched_move_line_ids.move_id.l10n_latam_document_type_id.mapped('doc_code_prefix')
+                is_car = False
+                if any(prefix[:3]=='NC-' for prefix in matched_move_code_prefix):
+                    is_car = True
+                    content += 'CAR' + ','
+                else:
+                    content += 'CR' + ','
+
+                # Punto de Venta + Nro de Comprobante
+                content += payment.withholding_number.replace('-','')[:20] + ','
 
                 # Razón Social
                 content += payment.partner_id.name.replace(',','')[:100] + ','
-
-                # Domicilio
-                content += payment.partner_id.street.replace(',','')[:200] + ','
 
                 # CUIT
                 payment.partner_id.ensure_vat()
@@ -1298,18 +1312,63 @@ class AccountJournal(models.Model):
                 alicuot_line = line.tax_line_id.get_partner_alicuot(
                 line.partner_id, line.date)
                 if not alicuot_line:
-                    raise ValidationError(_(
+                    raise ValidationError(
                     'No hay alicuota configurada en el partner '
                     '"%s" (id: %s)') % (
-                        line.partner_id.name, line.partner_id.id))
+                        line.partner_id.name, line.partner_id.id)
 
                 content += str(line.tax_line_id.get_partner_alicuot(
-                line.partner_id, line.date).alicuota_retencion)
+                line.partner_id, line.date).alicuota_retencion) + ','
+
+                if is_car:
+
+                    # Tipo de comprobante original
+                    content += 'CR' + ','
+
+                    # Comprobante que dio origen a la nota de crédito
+
+                    # pago -> grupo de pagos --> nc --> factura --> grupo de pagos --> pago (con retenc misiones)
+                    origin_invoice = payment.payment_group_id.matched_move_line_ids.move_id.reversed_entry_id
+                    tax_withholding_id = payment.tax_withholding_id
+                    for payment_group in origin_invoice.payment_group_ids:
+                        cant_ret = 0
+                        for pay_cr in payment_group.payment_ids:
+                            if pay_cr.tax_withholding_id == tax_withholding_id:
+                                origin_payment_cr = pay_cr
+                                cant_ret += 1
+                        if cant_ret != 1 or origin_payment_cr.amount != payment.amount:
+                            raise ValidationError("Solo se admitirá un comprobante de anulación de retención referido a un solo comprobante de retención y la anulación debe ser por un importe igual al importe total de la retención original. Revisar recibo/s %s. El recibo que anula la retención es %s (id: %s)" % (origin_invoice.payment_group_ids.mapped('name'), payment.payment_group_id.name, payment.payment_group_id.id))
+
+                        payment_date = payment.date
+                        origin_payment_cr_date = origin_payment_cr.date
+                        if (payment_date.year - origin_payment_cr_date.year) * 12 + (payment_date.month - origin_payment_cr_date.month) > 2:
+                            raise ValidationError("Solo se admitirá un comprobante de anulación de retención para un comprobante de origen dentro de los dos períodos anteriores. Revisar recibo/s %s. El recibo que anula la retención es %s (id: %s)".format(origin_invoice.payment_group_ids.mapped('name'), payment.payment_group_id.name, payment.payment_group_id.id))
+
+                        if payment_date < origin_payment_cr_date:
+                            raise ValidationError("La fecha del comprobante de anulación de retención no puede ser anterior al de la retención que está anulando. Revisar recibo/s %s. El recibo que anula la retención es %s (id: %s)".format(origin_invoice.payment_group_ids.mapped('name'), payment.payment_group_id.name, payment.payment_group_id.id))
+
+                        payment_partner_vat = payment.partner_id.ensure_vat()
+                        origin_payment_partner_vat = origin_payment_cr.partner_id.ensure_vat()
+                        if payment_partner_vat != origin_payment_partner_vat:
+                            raise ValidationError("Deben coincidir los CUIT emisores del comprobante de anulación de retención y del comprobante de retención original.  Revisar recibo/s %s. El recibo que anula la retención es %s (id: %s)".format(origin_invoice.payment_group_ids.mapped('name'), payment.payment_group_id.name, payment.payment_group_id.id))
+
+                    # Nro de comprobante que dio origen a la nota de crédito
+                    content += origin_payment_cr.withholding_number.replace('-','')[:20] + ','
+
+                    # Fecha del comprobante que dio origen a la nota de crédito
+                    content += origin_payment_cr.date.strftime('%d-%m-%Y') + ','
+
+                    # CUIT del comprobante que dio origen a la nota de crédito
+                    partner_vat = origin_payment_cr.partner_id.ensure_vat()
+                    content += partner_vat
+                else:
+                    content += ',,,'
 
                 content += '\n'
             elif line.move_id.is_invoice():
                 # Fecha
-                content += line.move_id.invoice_date.strftime('%d-%m-%Y') + ','
+                invoice_date = line.move_id.invoice_date
+                content += invoice_date.strftime('%d-%m-%Y') + ','
 
                 # Tipo de comprobante
                 content += line.move_id.l10n_latam_document_type_id.doc_code_prefix.replace('-','_') + ','
@@ -1321,13 +1380,11 @@ class AccountJournal(models.Model):
                 content += line.move_id.partner_id.name[:100] + ','
 
                 # CUIT
-                content += line.move_id.partner_id.ensure_vat() + ','
+                partner_vat = line.move_id.partner_id.ensure_vat()
+                content += partner_vat + ','
 
                 # Importe de la operación, consultar si l10n_latam_price_net es correcto
-                tax_group_id = line.tax_line_id.tax_group_id.id
-                for x in line.move_id.amount_by_group:
-                    if x[-1] == tax_group_id:
-                        content += str(x[2]) + ','
+                content += str(abs(line.balance)) + ','
 
                 # Alícuota
                 alicuot_line = line.tax_line_id.get_partner_alicuot(
@@ -1339,9 +1396,105 @@ class AccountJournal(models.Model):
                         line.partner_id.name, line.partner_id.id))
                 content += str(line.tax_line_id.get_partner_alicuot(line.partner_id, line.date).alicuota_percepcion)
 
+                if line.move_id.l10n_latam_document_type_id.doc_code_prefix[:3] == 'NC-':
+
+                    # Comprobante de origen
+                    origin_invoice = line.move_id.reversed_entry_id
+
+                    if not origin_invoice:
+                        raise ValidationError("No puede generarse la descarga si en el archivo hay percepciones en notas de crédito y dichas notas de cŕedito no tienen indicado cuál es el comprobante original que se está revirtiendo (ejemplo: una factura). Revisar %s (id: %s)." % (line.move_id.name, line.move_id.id))
+
+                    # CUIT del partner del comprobante de origen
+                    partner_vat_origin_invoice = origin_invoice.partner_id.ensure_vat()
+
+                    # Fecha del comprobante original
+                    date_origin_invoice = origin_invoice.invoice_date
+
+                    if (invoice_date.year - date_origin_invoice.year) * 12 + (invoice_date.month - date_origin_invoice.month) > 2:
+                        raise ValidationError("Solo se admitirá una NC para un comprobante de origen dentro de los dos períodos anteriores, revisar %s (id: %s) asociado a la factura %s (id: %s)" % (line.move_id.name, line.move_id.id, origin_invoice.name, origin_invoice.id))
+
+                    if invoice_date < date_origin_invoice:
+                        raise ValidationError("La fecha de la NC no podrá ser anterior a la fecha del comprobante de origen, revisar %s (id: %s) asociado a la factura %s (id: %s)" % (line.move_id.name, line.move_id.id, origin_invoice.name, origin_invoice.id))
+
+                    if partner_vat != partner_vat_origin_invoice:
+                        raise ValidationError("Deben coincidir los CUIT emisores de la NC y del comprobante original, revisar: %s (id: %s) asociado a la factura %s (id: %s)" % (line.move_id.name, line.move_id.id, origin_invoice.name, origin_invoice.id))
+
+                    # Tipo de comprobante original
+                    content += ',' + origin_invoice.l10n_latam_document_type_id.doc_code_prefix.replace('-','_') + ','
+
+                    # Nro de comprobante original
+                    content += origin_invoice.l10n_latam_document_number.replace('-','')[:20] + ','
+
+                    # Fecha de comprobante original
+                    content += date_origin_invoice.strftime('%d-%m-%Y') + ','
+
+                    # CUIT de comprobante original
+                    content += partner_vat_origin_invoice
+                else:
+                    content += ',,,,'
+
                 content += '\n'
 
         return [{
             'txt_filename': ('Retenciones ' if payment else 'Percepciones ') + 'Misiones.txt',
+            'txt_content': content,
+        }]
+
+    def retenciones_iva_files_values(self, move_lines):
+        """ Implementado segun especificación indicada en ticket 54274."""
+        self.ensure_one()
+        content = ''
+        for line in move_lines.sorted(key=lambda r: (r.date, r.id)):
+            payment = line.payment_id
+            if payment:
+                # regimen (long 3)
+                codigo_regimen = payment.tax_withholding_id.codigo_regimen
+                if not codigo_regimen:
+                    raise ValidationError(_('No hay código de régimen en la configuración del impuesto "%s"') % (
+                        payment.tax_withholding_id.name))
+                if len(codigo_regimen) < 3:
+                    raise ValidationError(_('El código de régimen tiene que tener 3 dígitos en la configuración del impuesto "%s"') % (payment.tax_withholding_id.name))
+                content += codigo_regimen[:3]
+
+                # cuit agente (long 11)
+                content += payment.partner_id.ensure_vat()
+
+                # fecha retención (long 10)
+                content += fields.Date.from_string(payment.date).strftime('%d/%m/%Y')
+
+                # número comprobante (long 16)
+                content += re.sub('[^0-9\.]', '', payment.withholding_number).ljust(16, '0')
+
+                # Aclaración importante: estamos agregando ceros entre el número de comprobante y el importe de retención
+                # esto contradice la especificación que dice que debe haber espacios pero en la tarea 31418 nos indicaron
+                # que debe haber espacios. Ver nota en dicha tarea 14/07/2023 10:31:00 y 13/07/2023 14:39:47
+                # importe retención (long 16)
+                content += '%016.2f' % payment.amount
+                content += '\r\n'
+            elif line.move_id.is_invoice():
+                # regimen (long 3)
+                codigo_regimen = line.tax_line_id.codigo_regimen
+                if not codigo_regimen:
+                    raise ValidationError(_('No hay código de régimen en la configuración del impuesto "%s"') % (
+                        line.tax_line_id.name))
+                if len(codigo_regimen) < 3:
+                    raise ValidationError(_('El código de régimen tiene que tener 3 dígitos en la configuración del impuesto "%s"') % (line.tax_line_id.name))
+                content += codigo_regimen[:3]
+
+                # cuit agente (long 11)
+                content += line.move_id.partner_id.ensure_vat()
+
+                # fecha retención (long 10)
+                content += fields.Date.from_string(line.move_id.invoice_date).strftime('%d/%m/%Y')
+
+                # número comprobante (long 16)
+                content += line.move_id.l10n_latam_document_number.ljust(16)
+
+                # importe retención (long 16)
+                content += '%16.2f' % line.balance
+                content += '\r\n'
+
+        return [{
+            'txt_filename': ('Retenciones' if payment else 'Percepciones') + '_iva.txt',
             'txt_content': content,
         }]

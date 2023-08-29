@@ -28,7 +28,9 @@ class AccountReport(models.AbstractModel):
         """
         self.ensure_one()
 
-        companies = self.env['account.journal'].browse([x['id'] for x in options.get('journals')]).mapped('company_id')
+        companies = self.env['account.journal'].browse(
+            [journal['id'] for journal in options.get('journals', []) if not journal['id'] in ('divider', 'group')]
+            ).mapped('company_id')
         if len(companies) != 1:
             raise ValidationError(_('La liquidación se debe realizar filtrando por 1 y solo 1 compañía en el reporte'))
         if self.allow_settlement and self.settlement_title:
@@ -78,7 +80,12 @@ class AccountReport(models.AbstractModel):
         balance = sum([x['debit'] - x['credit'] for x in lines_vals])
         if not journal.company_id.currency_id.is_zero(balance):
             if not self.settlement_allow_unbalanced or not account:
-                raise ValidationError('Debe configurar bla bla')
+                raise ValidationError(
+                    'Parece que la liquidación quedaría desbalanceada. Si desea generar igualmente la liquidacion puede:\n'
+                    '1. Ir a "Contabilidad / Configuración / Administración / Informes contables"\n'
+                    '2. Buscar el informe correspondiente\n'
+                    '3. En opciones, marcar "Settlement Allow Unbalanced"\n'
+                    '4. Puede volver a crear el asiento de liqidación seleccionando la cuenta de contrapartida que le sea solicitada')
             lines_vals.append({
                 'name': self.settlement_title,
                 'debit': balance < 0.0 and -balance,
