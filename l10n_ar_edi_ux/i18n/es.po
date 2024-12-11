@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 17.0+e\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-12-07 20:35+0000\n"
+"POT-Creation-Date: 2024-12-10 18:57+0000\n"
 "PO-Revision-Date: 2023-12-11 12:04+0000\n"
 "Last-Translator: Juan José Scarafía <scarafia.juanjose@gmail.com>, 2024\n"
 "Language-Team: Spanish (https://app.transifex.com/adhoc/teams/46451/es/)\n"
@@ -43,15 +43,13 @@ msgid "AFIP Webservice Connection"
 msgstr "Conexión Webservice de AFIP"
 
 #. module: l10n_ar_edi_ux
-#: model:ir.model,name:l10n_ar_edi_ux.model_account_check_action_wizard
-msgid "Account Check Action Wizard"
-msgstr "Asistente de acción de verificación de cuenta"
+#: model:ir.model.fields,field_description:l10n_ar_edi_ux.field_account_journal__check_add_debit_button
+msgid "Agregar botón de débito"
+msgstr ""
 
 #. module: l10n_ar_edi_ux
-#: model:ir.model.fields,field_description:l10n_ar_edi_ux.field_account_check_action_wizard__algolia_search
 #: model:ir.model.fields,field_description:l10n_ar_edi_ux.field_account_journal__algolia_search
 #: model:ir.model.fields,field_description:l10n_ar_edi_ux.field_account_move__algolia_search
-#: model:ir.model.fields,field_description:l10n_ar_edi_ux.field_account_payment__algolia_search
 #: model:ir.model.fields,field_description:l10n_ar_edi_ux.field_l10n_ar_afipws_connection__algolia_search
 #: model:ir.model.fields,field_description:l10n_ar_edi_ux.field_l10n_ar_boarding_permission__algolia_search
 #: model:ir.model.fields,field_description:l10n_ar_edi_ux.field_res_config_settings__algolia_search
@@ -120,16 +118,9 @@ msgid "Campo"
 msgstr ""
 
 #. module: l10n_ar_edi_ux
-#: model_terms:ir.ui.view,arch_db:l10n_ar_edi_ux.account_check_action_wizard_form_view
 #: model_terms:ir.ui.view,arch_db:l10n_ar_edi_ux.view_base_partner_update_from_padron_form
 msgid "Cancel"
 msgstr "Cancelar"
-
-#. module: l10n_ar_edi_ux
-#: model:ir.actions.act_window,name:l10n_ar_edi_ux.action_debit_check_wizard
-#: model_terms:ir.ui.view,arch_db:l10n_ar_edi_ux.account_check_action_wizard_form_view
-msgid "Check Action"
-msgstr "Comprobar acción"
 
 #. module: l10n_ar_edi_ux
 #: model:ir.model.fields,help:l10n_ar_edi_ux.field_res_config_settings__arba_cit
@@ -152,11 +143,6 @@ msgid "Config Settings"
 msgstr "Ajustes de configuración"
 
 #. module: l10n_ar_edi_ux
-#: model_terms:ir.ui.view,arch_db:l10n_ar_edi_ux.account_check_action_wizard_form_view
-msgid "Confirm"
-msgstr "Confirmar"
-
-#. module: l10n_ar_edi_ux
 #: model:ir.model,name:l10n_ar_edi_ux.model_res_partner
 msgid "Contact"
 msgstr "Contacto"
@@ -167,7 +153,6 @@ msgid "Converts retreived text fields to Title Case."
 msgstr "Convierte campos de texto recuperados a mayúsculas y minúsculas."
 
 #. module: l10n_ar_edi_ux
-#: model:ir.model.fields,field_description:l10n_ar_edi_ux.field_account_check_action_wizard__create_uid
 #: model:ir.model.fields,field_description:l10n_ar_edi_ux.field_l10n_ar_boarding_permission__create_uid
 #: model:ir.model.fields,field_description:l10n_ar_edi_ux.field_res_partner_update_from_padron_field__create_uid
 #: model:ir.model.fields,field_description:l10n_ar_edi_ux.field_res_partner_update_from_padron_info__create_uid
@@ -176,7 +161,6 @@ msgid "Created by"
 msgstr "Creado por"
 
 #. module: l10n_ar_edi_ux
-#: model:ir.model.fields,field_description:l10n_ar_edi_ux.field_account_check_action_wizard__create_date
 #: model:ir.model.fields,field_description:l10n_ar_edi_ux.field_l10n_ar_boarding_permission__create_date
 #: model:ir.model.fields,field_description:l10n_ar_edi_ux.field_res_partner_update_from_padron_field__create_date
 #: model:ir.model.fields,field_description:l10n_ar_edi_ux.field_res_partner_update_from_padron_info__create_date
@@ -185,17 +169,6 @@ msgid "Created on"
 msgstr "Creado el"
 
 #. module: l10n_ar_edi_ux
-#: model:ir.model.fields,field_description:l10n_ar_edi_ux.field_account_check_action_wizard__date
-msgid "Date"
-msgstr "Fecha"
-
-#. module: l10n_ar_edi_ux
-#: model_terms:ir.ui.view,arch_db:l10n_ar_edi_ux.view_account_payment_form_inherited
-msgid "Debit check"
-msgstr "Cheque de débito"
-
-#. module: l10n_ar_edi_ux
-#: model:ir.model.fields,field_description:l10n_ar_edi_ux.field_account_check_action_wizard__display_name
 #: model:ir.model.fields,field_description:l10n_ar_edi_ux.field_l10n_ar_boarding_permission__display_name
 #: model:ir.model.fields,field_description:l10n_ar_edi_ux.field_res_partner_update_from_padron_field__display_name
 #: model:ir.model.fields,field_description:l10n_ar_edi_ux.field_res_partner_update_from_padron_info__display_name
@@ -239,7 +212,6 @@ msgid "Get valid document types for this webservice"
 msgstr "Obtener tipos de documento válidos para este servicio web"
 
 #. module: l10n_ar_edi_ux
-#: model:ir.model.fields,field_description:l10n_ar_edi_ux.field_account_check_action_wizard__id
 #: model:ir.model.fields,field_description:l10n_ar_edi_ux.field_l10n_ar_boarding_permission__id
 #: model:ir.model.fields,field_description:l10n_ar_edi_ux.field_res_partner_update_from_padron_field__id
 #: model:ir.model.fields,field_description:l10n_ar_edi_ux.field_res_partner_update_from_padron_info__id
@@ -269,7 +241,6 @@ msgid "Journal Entry"
 msgstr "Asiento contable"
 
 #. module: l10n_ar_edi_ux
-#: model:ir.model.fields,field_description:l10n_ar_edi_ux.field_account_check_action_wizard__write_uid
 #: model:ir.model.fields,field_description:l10n_ar_edi_ux.field_l10n_ar_boarding_permission__write_uid
 #: model:ir.model.fields,field_description:l10n_ar_edi_ux.field_res_partner_update_from_padron_field__write_uid
 #: model:ir.model.fields,field_description:l10n_ar_edi_ux.field_res_partner_update_from_padron_info__write_uid
@@ -278,7 +249,6 @@ msgid "Last Updated by"
 msgstr "Última actualización por"
 
 #. module: l10n_ar_edi_ux
-#: model:ir.model.fields,field_description:l10n_ar_edi_ux.field_account_check_action_wizard__write_date
 #: model:ir.model.fields,field_description:l10n_ar_edi_ux.field_l10n_ar_boarding_permission__write_date
 #: model:ir.model.fields,field_description:l10n_ar_edi_ux.field_res_partner_update_from_padron_field__write_date
 #: model:ir.model.fields,field_description:l10n_ar_edi_ux.field_res_partner_update_from_padron_info__write_date
@@ -349,11 +319,6 @@ msgid "Partners"
 msgstr "Contactos"
 
 #. module: l10n_ar_edi_ux
-#: model:ir.model,name:l10n_ar_edi_ux.model_account_payment
-msgid "Payments"
-msgstr "Pagos"
-
-#. module: l10n_ar_edi_ux
 #: model:ir.model.fields,field_description:l10n_ar_edi_ux.field_l10n_ar_boarding_permission__dst_country
 msgid "País de destino"
 msgstr ""
@@ -415,6 +380,16 @@ msgstr ""
 "Establezca este campo si está informando una nota de débito/crédito y no "
 "tiene una factura relacionada. IMPORTANTE: Esto sólo aplica en \"Factura "
 "Electrónica - Web Service\""
+
+#. module: l10n_ar_edi_ux
+#: model:ir.model.fields,help:l10n_ar_edi_ux.field_account_journal__check_add_debit_button
+msgid ""
+"Si marca esta opción podrá debitar los cheques con un botón desde los "
+"mismos. Para realizar el asiento de débito se buscará un método de pago "
+"saliente del tipo Manual con nombre Manual, si no se encuentra uno se "
+"utilizará el primero que sea del tipo Manual (sin importar el nombre). Se "
+"utilizará luego la cuenta configurada en dicho método de ese método de pago."
+msgstr ""
 
 #. module: l10n_ar_edi_ux
 #: model_terms:ir.ui.view,arch_db:l10n_ar_edi_ux.view_base_partner_update_from_padron_form
@@ -557,6 +532,11 @@ msgstr "Asistente"
 #: model:ir.model.fields,field_description:l10n_ar_edi_ux.field_res_partner_update_from_padron_wizard__wizard_error
 msgid "Wizard Error"
 msgstr "Error de asistente"
+
+#. module: l10n_ar_edi_ux
+#: model_terms:ir.ui.view,arch_db:l10n_ar_edi_ux.view_base_partner_update_from_padron_form
+msgid "or"
+msgstr "o"
 
 #. module: l10n_ar_edi_ux
 #: model:ir.model,name:l10n_ar_edi_ux.model_res_partner_update_from_padron_field
