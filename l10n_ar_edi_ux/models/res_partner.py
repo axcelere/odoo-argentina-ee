@@ -102,8 +102,9 @@ class ResPartner(models.Model):
 
         # if there is certificate for current company use that one, if not use the company with first certificate found
         today = fields.Date.context_today(self.with_context(tz='America/Argentina/Buenos_Aires'))
-        company = self.env.company if self.env.company.sudo().l10n_ar_afip_ws_crt and self.env.company.sudo().l10n_ar_crt_exp_date > today else self.env['res.company'].search(
-            [('l10n_ar_afip_ws_crt', '!=', False), ('l10n_ar_crt_exp_date', '>', today)], limit=1)
+        valid_crt_company = self.env['res.company'].sudo().search([('l10n_ar_afip_ws_crt', '!=', False)])\
+            .filtered(lambda x: x._l10n_ar_get_afip_crt_expire_date() > today)
+        company = self.env.company if self.env.company in  valid_crt_company else valid_crt_company[:1]
         if not company:
             raise UserError(_('Please configure an AFIP Certificate in order to continue'))
         client, auth = company._l10n_ar_get_connection('ws_sr_constancia_inscripcion')._get_client()
@@ -266,5 +267,12 @@ class ResPartner(models.Model):
             values['l10n_ar_afip_responsibility_type_id'] = self.env.ref('l10n_ar.res_IVAE').id
         else:
             _logger.info("We couldn't infer the AFIP responsability from padron, you must set it manually.")
+
+        # Si somos un consorcio entonces no colocamos responsbilidad afip y dejamos mensajito en el contecto avisando
+        if '681098' in actividades or [item for item in ["Fideicomiso", "Consorcio", "Cons.", "Cons "] if item in denominacion]:
+            values.pop('l10n_ar_afip_responsibility_type_id', None)
+            self.message_post(body=_(
+                'Posiblemente este cliente sea un consorcio/fideicomiso. Por favor debe consultar directamente con el'
+                ' cliente sus datos y agregar manualmente la responsabilidad de AFIP en el Odoo'))
 
         return values
