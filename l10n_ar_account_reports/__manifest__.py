@@ -31,7 +31,7 @@
     'depends': [
         'account_reports',
         'l10n_ar',
-        'l10n_latam_check_adhoc',
+        'l10n_latam_check',
     ],
     'data': [
         'wizards/checks_to_date_view.xml',
