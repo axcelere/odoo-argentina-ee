@@ -256,7 +256,7 @@ class AccountJournal(models.Model):
                 # orden de pago (sin letra)
                 # 09 sería otro comprobante y 10 reinitegro de perc/ret
                 # aclaración: si cargo una nota de crédito con código 10 me aparece un mensaje como este:
-                # "Error: Línea 25: Debe ingresar un tipo de comprobante válido. 
+                # "Error: Línea 25: Debe ingresar un tipo de comprobante válido.
                 # La carga de Reintegro de Retenc./Perc solo se puede efectuar desde el formulario en forma manual. La línea fue descartada."
                 content += '03 '
 
@@ -507,11 +507,11 @@ class AccountJournal(models.Model):
 
                 # 6 - Tipo de comprobante origen de la retención
 
-                #Identificamos si el comprobante de origen es una Factura de credito MiPyMEs sino lo 
+                #Identificamos si el comprobante de origen es una Factura de credito MiPyMEs sino lo
                 # tratamos como una factura normal
                 # NOTA: Esto solo aplica para el calculo de Percepciones
                 content += '10' if or_inv.l10n_latam_document_type_id.code in ['201', '206', '211'] else '01'
-                
+
                 # 7 - Letra del Comprobante
                 if payment:
                     content += ' '
@@ -881,7 +881,7 @@ class AccountJournal(models.Model):
 
             # 7 Monto sujeto a percepción
             content.append(format_amount(
-                line.withholding_id.withholdable_base_amount, 12, 2, '.'))
+                line.withholding_id.withholdable_base_amount or line.withholding_id.base_amount, 12, 2, '.'))
 
             # 8 alicuota de la retencion
             content.append(format_amount(
