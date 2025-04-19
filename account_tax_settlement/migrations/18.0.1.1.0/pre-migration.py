@@ -14,6 +14,9 @@ def migrate(cr, version):
     view = env.ref("account_ux.view_move_line_tree_grouped", raise_if_not_found=False)
     if view:
         view.unlink()
+    view = env.ref("account_payment_group.view_move_line_with_matched_tree", raise_if_not_found=False)
+    if view:
+        view.unlink()
     view = env.ref("account_payment_group.view_move_line_tree", raise_if_not_found=False)
     if view:
         view.unlink()
