@@ -133,7 +133,7 @@ class ResPartner(models.Model):
         errors = []
         values = {}
         try:
-            res = client.service.getPersona(
+            res = client.service.getPersona_v2(
                 sign=auth.get("Sign"), token=auth.get("Token"), cuitRepresentada=auth.get("Cuit"), idPersona=vat
             )
 
@@ -169,7 +169,7 @@ class ResPartner(models.Model):
         impuestos = [
             imp["idImpuesto"]
             for imp in data_mt.get("impuesto", []) + data_rg.get("impuesto", [])
-            if data.get("estadoClave") == "ACTIVO"
+            if data.get("estadoClave") == "ACTIVO" and imp.get("estadoImpuesto") == "AC"
         ]
 
         data_mt_actividades = data_mt.get("actividadMonotributista", []) or []
@@ -262,25 +262,12 @@ class ResPartner(models.Model):
                 "zip": domicilio.get("codPostal", ""),
                 "actividades_padron": self.actividades_padron.search([("code", "in", actividades)]).ids,
                 "impuestos_padron": self.impuestos_padron.search([("code", "in", impuestos)]).ids,
-                "imp_iva_padron": imp_iva,
-                "monotributo_padron": monotributo,
                 "actividad_monotributo_padron": cat_mt.get("descripcionCategoria") if cat_mt else "",
                 "empleador_padron": True if 301 in impuestos else False,
                 "integrante_soc_padron": "",
                 "last_update_padron": fields.Date.today(),
             }
         )
-
-        ganancias_inscripto = [10, 11]
-        ganancias_exento = [12]
-        if set(ganancias_inscripto) & set(impuestos):
-            values["imp_ganancias_padron"] = "AC"
-        elif set(ganancias_exento) & set(impuestos):
-            values["imp_ganancias_padron"] = "EX"
-        elif monotributo == "S":
-            values["imp_ganancias_padron"] = "NC"
-        else:
-            _logger.info("We couldn't get impuesto a las ganancias from padron, you must set it manually")
 
         if provincia:
             # depending on the database, caba can have one of this codes
@@ -309,9 +296,9 @@ class ResPartner(models.Model):
             _logger.info("We couldn't infer the AFIP responsability from padron, you must set it manually.")
 
         # Si somos un consorcio entonces no colocamos responsbilidad afip y dejamos mensajito en el contecto avisando
-        if "681098" in actividades or [
-            item for item in ["Fideicomiso", "Consorcio", "Cons.", "Cons "] if item in denominacion
-        ]:
+        if "681098" in actividades or any(
+            word in denominacion.lower() for word in ["fideicomiso", "consorcio", "cons.", "cons "]
+        ):
             values.pop("l10n_ar_afip_responsibility_type_id", None)
             self.message_post(
                 body=_(
