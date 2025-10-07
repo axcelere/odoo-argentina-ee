@@ -1,9 +1,11 @@
 # from odoo.tools.misc import formatLang
 # from odoo.tools import DEFAULT_SERVER_DATE_FORMAT
 import re
+import unicodedata
 
 from odoo import _, fields, models
 from odoo.exceptions import RedirectWarning, ValidationError
+from odoo.tools import ustr
 from odoo.tools.float_utils import float_round
 
 #########
@@ -39,6 +41,14 @@ def get_pos_and_number(full_number):
         return ("0", re.sub("[^0-9]", "", args[0]))
     else:
         return re.sub("[^0-9]", "", args[0]), re.sub("[^0-9]", "", "".join(args[1:]))
+
+
+def remove_accents_and_dieresis(input_str):
+    """Suboptimal-but-better-than-nothing way to replace accented or dieresis-containing
+    latin letters by an ASCII equivalent."""
+    input_str = ustr(input_str)
+    nkfd_form = unicodedata.normalize("NFKD", input_str)
+    return "".join([c for c in nkfd_form if not unicodedata.combining(c)])
 
 
 class AccountJournal(models.Model):
@@ -1053,6 +1063,10 @@ class AccountJournal(models.Model):
             # digitos y ademas sacamos estos datos del pago y no del nro de doc
             # del payment group
             if payment:
+                if float_round(line.balance, precision_digits=2) == 0.0:
+                    # si el monto de la retencion es 0.0 no lo incluimos en el txt
+                    continue
+
                 # el numero de la retencion
                 pos, number = get_pos_and_number(line.withholding_id.name)
                 content += f"{pos:>04s}"
@@ -1241,6 +1255,10 @@ class AccountJournal(models.Model):
                     content += "%03d" % int(tax.l10n_ar_code) if tax.l10n_ar_code else "499"
                     if tax.l10n_ar_code == "602":
                         codcond = "13" if tax.amount == 3 else "14"
+                    # Si el código de régimen es 214 entonces el código de condición debe ser '00'.
+                    # Más información en archivo l10n_ar_account_tax_settlement/data/relaciones-codigos-sicore.csv
+                    if line.l10n_ar_code == "214":
+                        codcond = "00"
             else:
                 # Percepción de IVA
                 content += "0767"
@@ -1249,6 +1267,10 @@ class AccountJournal(models.Model):
                 )  # (ver account tax) DUDA cómo le aplico el código de régimen a las facturas viejas
                 if tax.l10n_ar_code == "602":
                     codcond = "13" if tax.amount == 3 else "14"
+                # Si el código de régimen es 493 entonces el código de condición debe ser '00'.
+                # Más información en archivo l10n_ar_account_tax_settlement/data/relaciones-codigos-sicore.xlsx
+                elif tax.l10n_ar_code == "493":
+                    codcond = "00"
 
             # Codigo de Operacion            [ 1]
             content += codop  # TODO: ???? DUDA: SERÍA PARA VER SI ES RETENCION O PERCEPCION
