@@ -1242,6 +1242,10 @@ class AccountJournal(models.Model):
                     content += '%03d' % int(line.tax_line_id.codigo_regimen) if line.tax_line_id.codigo_regimen else '499'
                     if line.tax_line_id.codigo_regimen == '602':
                         codcond = '13' if line.tax_line_id.amount == 3 else '14'
+                    # Si el código de régimen es 214 entonces el código de condición debe ser '00'.
+                    # Más información en archivo l10n_ar_account_tax_settlement/data/relaciones-codigos-sicore.csv
+                    if line.tax_line_id.codigo_regimen == '214':
+                        codcond = '00'
                 else:
                     raise ValidationError(_('Código de impuestos %s no implementado para SICORE') % line.tax_line_id.codigo_impuesto)
             else:
@@ -1250,6 +1254,10 @@ class AccountJournal(models.Model):
                 content +=  '%03d' % int(line.tax_line_id.codigo_regimen) # (ver account tax) DUDA cómo le aplico el código de régimen a las facturas viejas
                 if line.tax_line_id.codigo_regimen == '602':
                     codcond = '13' if line.tax_line_id.amount == 3 else '14'
+                # Si el código de régimen es 493 entonces el código de condición debe ser '00'.
+                # Más información en archivo l10n_ar_account_tax_settlement/data/relaciones-codigos-sicore.xlsx
+                elif line.tax_line_id.codigo_regimen == '493':
+                    codcond = '00'
 
             # Codigo de Operacion            [ 1]
             content += codop  # TODO: ???? DUDA: SERÍA PARA VER SI ES RETENCION O PERCEPCION
@@ -1280,7 +1288,8 @@ class AccountJournal(models.Model):
             content += '%02d' % int(partner.l10n_latam_identification_type_id.l10n_ar_afip_code)
 
             # Numero Documento Retenido      [20]
-            content += partner.vat.ljust(20)
+            vat = re.sub(r"\D", "", partner.vat)
+            content += vat.ljust(20)
 
             # Numero Certificado Original    [14]
             content += '%014d' % 0  # TODO: ????
